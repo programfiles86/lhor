@@ -6,30 +6,19 @@ on:
 jobs:
   start-server:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Set up Java
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-
-      - name: Install Ngrok
-        run: |
-          curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null
-          echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list
-          sudo apt update && sudo apt install ngrok -y
-
       - name: Start Minecraft Server
         run: |
-          cd /lhor/server
+          cd /workspace/lhor/server
           java -Xmx2G -Xms2G -jar server.jar nogui &
 
       - name: Start Ngrok and Get IP
         run: |
-          ./ngrok tcp 25565 > ngrok.log &
+          ngrok tcp 25565 > ngrok.log &
           sleep 10
           NGROK_IP=$(curl -s http://127.0.0.1:4040/api/tunnels | jq -r '.tunnels[0].public_url')
           echo "Server Address: $NGROK_IP"
@@ -37,7 +26,7 @@ jobs:
 
       - name: Update README with IP
         run: |
-          sed -i "s|🔗 Server Address: .*|🔗 Server Address: $NGROK_IP|" README.md
+          sed -i "s|Server Address: .*|Server Address: [🔗 Server Address]($NGROK_IP)|" README.md
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
           git add README.md
