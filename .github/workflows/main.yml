@@ -5,7 +5,7 @@ on:
 
 jobs:
   start-server:
-    runs-on: ubuntu-latest  # Runs on GitHub's cloud
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
@@ -28,8 +28,19 @@ jobs:
         run: |
           java -Xmx6288M -Xms6288M -jar server.jar nogui &
 
-      - name: Start Ngrok
+      - name: Start Ngrok and Get IP
         run: |
           ./ngrok tcp 25565 > ngrok.log &
           sleep 10
-          cat ngrok.log
+          NGROK_IP=$(curl -s http://127.0.0.1:4040/api/tunnels | jq -r '.tunnels[0].public_url')
+          echo "Server Address: $NGROK_IP"
+          echo "NGROK_IP=$NGROK_IP" >> $GITHUB_ENV
+
+      - name: Update README with IP
+        run: |
+          sed -i "s|🔗 Server Address: .*|🔗 Server Address: $NGROK_IP|" README.md
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git add README.md
+          git commit -m "Updated server address"
+          git push
