@@ -3,3 +3,5 @@
 Click the button below to start the Minecraft server:
 
 ![Start Server](https://github.com/programfiles86/lhor/actions/workflows/start-server.yml)
+
+🔗 Server Address: _(Starting...)_
