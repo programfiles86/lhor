@@ -1,0 +1,34 @@
+name: Start Minecraft Server
+
+on:
+  workflow_dispatch:
+
+jobs:
+  start-server:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Start Minecraft Server
+        run: |
+          cd server
+          nohup java -Xmx6288M -Xms6288M -jar server.jar nogui > server.log 2>&1 &
+
+      - name: Start Ngrok
+        run: |
+          cd server
+          nohup ./ngrok tcp 25565 > ngrok.log 2>&1 &
+          sleep 5
+          curl -s http://localhost:4040/api/tunnels > ngrok.json
+          NGROK_IP=$(jq -r '.tunnels[0].public_url' ngrok.json)
+          echo "NGROK_IP=$NGROK_IP" >> $GITHUB_ENV
+
+      - name: Update README with Ngrok IP
+        run: |
+          sed -i "s|Ngrok IP: .*|Ngrok IP: \${NGROK_IP}\|" README.md
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git commit -am "Update Ngrok IP in README"
+          git push
